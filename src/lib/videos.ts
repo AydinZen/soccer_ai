@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
+import { Platform } from 'react-native';
 
 import { supabase } from '@/lib/supabase';
 import type { CreateVideoInput, Video } from '@/types/video';
@@ -45,16 +46,30 @@ export async function uploadVideo(
   if (!session) throw new Error('You must be signed in to upload.');
 
   const { ext, contentType } = inferExtAndType(localUri, mimeType);
-  // First path segment MUST be the user id (storage RLS policy).
   const path = `${session.user.id}/${Date.now()}.${ext}`;
-  const url = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`;
 
+  if (Platform.OS === 'web') {
+    // On web, fetch the blob and upload via the Supabase JS client.
+    onProgress(0.1);
+    const response = await fetch(localUri);
+    const blob = await response.blob();
+    onProgress(0.5);
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET)
+      .upload(path, blob, { contentType, upsert: false });
+    if (uploadError) throw uploadError;
+    onProgress(1);
+    return { path };
+  }
+
+  // Native: stream via expo-file-system for real progress.
+  const url = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`;
   const task = FileSystem.createUploadTask(
     url,
     localUri,
     {
       httpMethod: 'POST',
-      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT, // raw file body
+      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
       headers: {
         Authorization: `Bearer ${session.access_token}`,
         apikey: SUPABASE_PUBLISHABLE_KEY,
@@ -70,7 +85,6 @@ export async function uploadVideo(
     },
   );
 
-  // NOTE: expo-file-system does NOT throw on HTTP 4xx/5xx — inspect status.
   const result = await task.uploadAsync();
   if (!result || result.status < 200 || result.status >= 300) {
     throw new Error(`Upload failed (${result?.status ?? 'no response'}). ${result?.body ?? ''}`.trim());
