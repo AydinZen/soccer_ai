@@ -49,31 +49,31 @@ export async function uploadVideo(
   const path = `${userId}/${Date.now()}.${ext}`;
 
   if (Platform.OS === 'web') {
-    // On web, fetch the blob then POST directly to the storage REST API
-    // with explicit anon key headers (JS client drops them without a session).
+    // Get a signed upload URL from our Edge Function (uses service role — no auth needed).
     onProgress(0.1);
+    const urlRes = await supabase.functions.invoke('get-upload-url', {
+      body: { user_id: userId, content_type: contentType },
+    });
+    if (urlRes.error) throw new Error(`Could not get upload URL: ${urlRes.error.message}`);
+    const { signedUrl, path: signedPath } = urlRes.data as { signedUrl: string; path: string };
+
+    // Read the video blob and PUT it to the signed URL.
     const response = await fetch(localUri);
     if (!response.ok) throw new Error(`Could not read video file (${response.status})`);
     const blob = await response.blob();
-    onProgress(0.4);
-    const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`;
-    const uploadResponse = await fetch(uploadUrl, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-        apikey: SUPABASE_PUBLISHABLE_KEY,
-        'Content-Type': contentType,
-        'x-upsert': 'false',
-        'cache-control': '3600',
-      },
+    onProgress(0.5);
+
+    const uploadResponse = await fetch(signedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': contentType },
       body: blob,
     });
     if (!uploadResponse.ok) {
       const body = await uploadResponse.text();
-      throw new Error(`Storage upload failed (${uploadResponse.status}): ${body}`);
+      throw new Error(`Upload failed (${uploadResponse.status}): ${body}`);
     }
     onProgress(1);
-    return { path };
+    return { path: signedPath };
   }
 
   // Native: stream via expo-file-system for real progress.
