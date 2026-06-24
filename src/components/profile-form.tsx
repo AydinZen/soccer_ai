@@ -84,12 +84,7 @@ export function ProfileForm({
   }
 
   async function handleSubmit() {
-    if (!validate()) return;
-    if (!user) {
-      // DEV: no-login preview mode — skip the Supabase save and just proceed.
-      onSaved();
-      return;
-    }
+    if (!user || !validate()) return;
     setSaving(true);
     try {
       let avatar_url = initial?.avatar_url ?? null;

@@ -1,15 +1,21 @@
 import { Stack } from 'expo-router';
 
-// DEV: auth/profile gating removed so you can browse the app without logging in.
-// Land on the tabs by default. Restore the gated version (Stack.Protected on
-// hasProfile) when you want the real signup → profile-setup flow back.
-export const unstable_settings = { initialRouteName: '(tabs)' };
+import { useAuth } from '@/contexts/AuthProvider';
 
+// Inside the app, gate on whether the one-time profile setup is done. Users
+// without a complete profile (name + position + skill) are routed to
+// profile-setup; everyone else goes straight to the tabs.
 export default function AppLayout() {
+  const { hasProfile } = useAuth();
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="profile-setup" />
+      <Stack.Protected guard={hasProfile}>
+        <Stack.Screen name="(tabs)" />
+      </Stack.Protected>
+      <Stack.Protected guard={!hasProfile}>
+        <Stack.Screen name="profile-setup" />
+      </Stack.Protected>
     </Stack>
   );
 }
