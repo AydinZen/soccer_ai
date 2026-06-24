@@ -28,8 +28,6 @@ function RootNavigator() {
 
   const isSignedIn = !!session;
 
-  // Signed-in users get the app; everyone else gets the login/signup screens.
-  // Guarded screens are removed from the nav state entirely (no manual redirects).
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={isSignedIn}>

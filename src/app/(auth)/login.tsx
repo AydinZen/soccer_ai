@@ -8,6 +8,7 @@ import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
 import { BRAND, DANGER } from '@/constants/ui';
 import { Spacing } from '@/constants/theme';
+import { friendlyAuthError } from '@/lib/auth-errors';
 import { supabase } from '@/lib/supabase';
 
 export default function Login() {
@@ -28,7 +29,7 @@ export default function Login() {
       password,
     });
     setLoading(false);
-    if (signInError) setError(signInError.message);
+    if (signInError) setError(friendlyAuthError(signInError, 'login'));
     // On success the AuthProvider's onAuthStateChange flips the route automatically.
   }
 

@@ -8,6 +8,7 @@ import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
 import { BRAND, DANGER } from '@/constants/ui';
 import { Spacing } from '@/constants/theme';
+import { friendlyAuthError } from '@/lib/auth-errors';
 import { supabase } from '@/lib/supabase';
 
 export default function Signup() {
@@ -41,7 +42,7 @@ export default function Signup() {
     setLoading(false);
 
     if (signUpError) {
-      setError(signUpError.message);
+      setError(friendlyAuthError(signUpError, 'signup'));
       return;
     }
     // Supabase returns a user with an empty `identities` array when the email
