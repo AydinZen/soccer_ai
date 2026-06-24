@@ -49,15 +49,29 @@ export async function uploadVideo(
   const path = `${userId}/${Date.now()}.${ext}`;
 
   if (Platform.OS === 'web') {
-    // On web, fetch the blob and upload via the Supabase JS client.
+    // On web, fetch the blob then POST directly to the storage REST API
+    // with explicit anon key headers (JS client drops them without a session).
     onProgress(0.1);
     const response = await fetch(localUri);
+    if (!response.ok) throw new Error(`Could not read video file (${response.status})`);
     const blob = await response.blob();
-    onProgress(0.5);
-    const { error: uploadError } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, blob, { contentType, upsert: false });
-    if (uploadError) throw uploadError;
+    onProgress(0.4);
+    const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`;
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        'Content-Type': contentType,
+        'x-upsert': 'false',
+        'cache-control': '3600',
+      },
+      body: blob,
+    });
+    if (!uploadResponse.ok) {
+      const body = await uploadResponse.text();
+      throw new Error(`Storage upload failed (${uploadResponse.status}): ${body}`);
+    }
     onProgress(1);
     return { path };
   }
