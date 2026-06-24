@@ -58,27 +58,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (active) setIsLoading(false);
         return;
       }
-      // No session — silently sign in (or create) a dev account.
-      const DEV_EMAIL = 'dev@soccer-ai.app';
-      const DEV_PASS = 'devpass123';
-      let session = null;
-      const { data: signIn } = await supabase.auth.signInWithPassword({ email: DEV_EMAIL, password: DEV_PASS });
-      if (signIn.session) {
-        session = signIn.session;
-      } else {
-        const { data: signUp } = await supabase.auth.signUp({ email: DEV_EMAIL, password: DEV_PASS });
-        if (signUp.session) session = signUp.session;
-      }
+      // No session — sign in anonymously (no email/password needed).
+      const { data: anonData } = await supabase.auth.signInAnonymously();
+      const session = anonData.session ?? null;
       if (!active) return;
       setSession(session);
       if (session) {
-        // Ensure a complete profile exists so profile-setup is skipped.
+        // Seed a complete profile so profile-setup is skipped.
         await supabase.from('profiles').upsert({
           id: session.user.id,
           full_name: 'Dev Player',
           position: 'forward',
           skill_level: 'intermediate',
-        }, { onConflict: 'id', ignoreDuplicates: true });
+        }, { onConflict: 'id' });
         await loadProfile(session.user.id);
       }
       if (active) setIsLoading(false);
