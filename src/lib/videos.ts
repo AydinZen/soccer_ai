@@ -35,18 +35,18 @@ function inferExtAndType(localUri: string, mimeType?: string | null): {
  * which streams from disk (no loading the whole file into JS memory).
  * Returns the bucket-relative storage path to persist in the videos row.
  */
+const DEV_USER_ID = '00000000-0000-0000-0000-000000000001';
+
 export async function uploadVideo(
   localUri: string,
   onProgress: (fraction: number) => void,
   mimeType?: string | null,
 ): Promise<{ path: string }> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) throw new Error('You must be signed in to upload.');
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user.id ?? DEV_USER_ID;
 
   const { ext, contentType } = inferExtAndType(localUri, mimeType);
-  const path = `${session.user.id}/${Date.now()}.${ext}`;
+  const path = `${userId}/${Date.now()}.${ext}`;
 
   if (Platform.OS === 'web') {
     // On web, fetch the blob and upload via the Supabase JS client.
@@ -97,15 +97,13 @@ export async function uploadVideo(
  * player-identification data with the uploaded file's storage path.
  */
 export async function createVideoRecord(input: CreateVideoInput): Promise<Video> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error('You must be signed in.');
+  const { data: { user } } = await supabase.auth.getUser();
+  const userId = user?.id ?? DEV_USER_ID;
 
   const { data, error } = await supabase
     .from('videos')
     .insert({
-      user_id: user.id,
+      user_id: userId,
       storage_path: input.storage_path,
       duration: input.duration,
       file_size: input.file_size,
