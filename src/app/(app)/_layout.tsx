@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthProvider';
 // without a complete profile (name + position + skill) are routed to
 // profile-setup; everyone else goes straight to the tabs.
 export default function AppLayout() {
-  const { hasProfile } = useAuth();
+  const hasProfile = true; // DEV BYPASS
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

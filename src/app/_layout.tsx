@@ -26,7 +26,7 @@ function RootNavigator() {
   if (!isSupabaseConfigured) return <SetupRequired />;
   if (isLoading) return null; // brief; native splash still covers cold start
 
-  const isSignedIn = !!session;
+  const isSignedIn = true; // DEV BYPASS
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
