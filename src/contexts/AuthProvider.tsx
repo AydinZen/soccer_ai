@@ -49,18 +49,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Fast local hydration (reads storage, no network).
-    supabase.auth.getSession().then(({ data }) => {
+    async function initSession() {
+      const { data } = await supabase.auth.getSession();
       if (!active) return;
-      setSession(data.session);
       if (data.session) {
-        loadProfile(data.session.user.id).finally(() => {
-          if (active) setIsLoading(false);
-        });
-      } else {
-        setIsLoading(false);
+        setSession(data.session);
+        await loadProfile(data.session.user.id);
+        if (active) setIsLoading(false);
+        return;
       }
-    });
+      // No session — silently sign in (or create) a dev account.
+      const DEV_EMAIL = 'dev@soccer-ai.app';
+      const DEV_PASS = 'devpass123';
+      let session = null;
+      const { data: signIn } = await supabase.auth.signInWithPassword({ email: DEV_EMAIL, password: DEV_PASS });
+      if (signIn.session) {
+        session = signIn.session;
+      } else {
+        const { data: signUp } = await supabase.auth.signUp({ email: DEV_EMAIL, password: DEV_PASS });
+        if (signUp.session) session = signUp.session;
+      }
+      if (!active) return;
+      setSession(session);
+      if (session) {
+        // Ensure a complete profile exists so profile-setup is skipped.
+        await supabase.from('profiles').upsert({
+          id: session.user.id,
+          full_name: 'Dev Player',
+          position: 'forward',
+          skill_level: 'intermediate',
+        }, { onConflict: 'id', ignoreDuplicates: true });
+        await loadProfile(session.user.id);
+      }
+      if (active) setIsLoading(false);
+    }
+    initSession();
 
     const {
       data: { subscription },
