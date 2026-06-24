@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, View } from 'react-native';
+
+import { ThemedText } from '@/components/themed-text';
+import { Button } from '@/components/ui/button';
+import { DANGER } from '@/constants/ui';
 
 import { Screen } from '@/components/ui/screen';
 import { AnalysisResultPreview } from '@/components/upload/analysis-result-preview';
@@ -22,6 +26,7 @@ export default function Upload() {
   const [idData, setIdData] = useState<PlayerIdentification | null>(null);
   const [progress, setProgress] = useState(0);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   function reset() {
     setIdData(null);
@@ -34,6 +39,7 @@ export default function Upload() {
     if (!idData) return;
     setProgress(0);
     setAnalysis(null);
+    setUploadError(null);
     setStep('uploading');
 
     // Phase 1 — upload the clip + record the row. A failure here returns to pick.
@@ -49,7 +55,7 @@ export default function Upload() {
       videoId = record.id;
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Something went wrong. Please try again.';
-      Alert.alert('Upload failed', message);
+      setUploadError(message);
       setStep('pick');
       return;
     }
@@ -93,7 +99,16 @@ export default function Upload() {
         <ClipInstructions onContinue={() => setStep('pick')} onBack={() => setStep('identify')} />
       )}
       {step === 'pick' && (
-        <VideoPickerPreview onConfirm={handleConfirm} onBack={() => setStep('instructions')} />
+        <>
+          {uploadError ? (
+            <View style={{ marginBottom: 8 }}>
+              <ThemedText type="small" style={{ color: DANGER }}>
+                Upload failed: {uploadError}
+              </ThemedText>
+            </View>
+          ) : null}
+          <VideoPickerPreview onConfirm={handleConfirm} onBack={() => setStep('instructions')} />
+        </>
       )}
       {step === 'uploading' && <UploadProgress progress={progress} />}
       {step === 'analyzing' && <AnalyzingState />}
