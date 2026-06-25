@@ -3,9 +3,10 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { PopCard } from '@/components/ui/pop-card';
 import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
-import { ACCENTS, HERO_GRADIENT } from '@/constants/ui';
+import { ACCENTS, HERO_GRADIENT, SHADOW } from '@/constants/ui';
 import { useAuth } from '@/contexts/AuthProvider';
 import { POSITION_LABELS } from '@/types/profile';
 
@@ -23,23 +24,25 @@ export default function Home() {
   return (
     <Screen maxWidth={1100}>
       {/* Hero */}
-      <LinearGradient
-        colors={HERO_GRADIENT}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.hero}>
-        <View style={styles.heroBadge}>
-          <ThemedText style={styles.heroBadgeText}>⚽ AI COACH</ThemedText>
-        </View>
-        <ThemedText style={styles.heroTitle}>Level up your game</ThemedText>
-        <ThemedText style={styles.heroSub}>
-          Upload a match clip and get an instant pro-style breakdown — scores, strengths, and a
-          personalized drill plan.
-        </ThemedText>
-        <Pressable style={styles.heroBtn} onPress={() => router.navigate('/upload')}>
-          <ThemedText style={styles.heroBtnText}>Analyze my game →</ThemedText>
-        </Pressable>
-      </LinearGradient>
+      <PopCard style={[styles.hero, SHADOW]}>
+        <LinearGradient
+          colors={HERO_GRADIENT}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.heroInner}>
+          <View style={styles.heroBadge}>
+            <ThemedText style={styles.heroBadgeText}>⚽ AI COACH</ThemedText>
+          </View>
+          <ThemedText style={styles.heroTitle}>Level up your game</ThemedText>
+          <ThemedText style={styles.heroSub}>
+            Upload a match clip and get an instant pro-style breakdown — scores, strengths, and a
+            personalized drill plan.
+          </ThemedText>
+          <Pressable style={styles.heroBtn} onPress={() => router.navigate('/upload')}>
+            <ThemedText style={styles.heroBtnText}>Analyze my game →</ThemedText>
+          </Pressable>
+        </LinearGradient>
+      </PopCard>
 
       {/* Welcome */}
       <View style={styles.welcome}>
@@ -55,9 +58,9 @@ export default function Home() {
 
       {/* Stats row */}
       <View style={styles.statsRow}>
-        <StatCard num="0" label="Clips" accent={ACCENTS.blue} />
-        <StatCard num="—" label="Avg Rating" accent={ACCENTS.orange} />
-        <StatCard num="0" label="Drills" accent={ACCENTS.violet} />
+        <StatCard num="0" label="Clips" accent={ACCENTS.blue} delay={60} />
+        <StatCard num="—" label="Avg Rating" accent={ACCENTS.orange} delay={120} />
+        <StatCard num="0" label="Drills" accent={ACCENTS.violet} delay={180} />
       </View>
 
       {/* Feature grid */}
@@ -65,31 +68,37 @@ export default function Home() {
         WHAT YOU&apos;LL GET
       </ThemedText>
       <View style={styles.grid}>
-        {FEATURES.map((f) => (
-          <View key={f.title} style={[styles.featureCard, { backgroundColor: f.accent.tint }]}>
+        {FEATURES.map((f, i) => (
+          <PopCard
+            key={f.title}
+            interactive
+            delay={220 + i * 70}
+            style={[styles.featureCard, { backgroundColor: f.accent.tint }, SHADOW]}>
             <ThemedText style={styles.featureIcon}>{f.icon}</ThemedText>
             <ThemedText style={[styles.featureTitle, { color: f.accent.deep }]}>
               {f.title}
             </ThemedText>
             <ThemedText style={[styles.featureText, { color: f.accent.deep }]}>{f.text}</ThemedText>
-          </View>
+          </PopCard>
         ))}
       </View>
 
       {/* CTA banner */}
-      <LinearGradient
-        colors={[ACCENTS.green.base, ACCENTS.cyan.base]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.ctaBanner}>
-        <View style={{ flex: 1 }}>
-          <ThemedText style={styles.ctaTitle}>Ready when you are</ThemedText>
-          <ThemedText style={styles.ctaSub}>One clip is all it takes to start.</ThemedText>
-        </View>
-        <Pressable style={styles.ctaBtn} onPress={() => router.navigate('/upload')}>
-          <ThemedText style={styles.ctaBtnText}>Upload</ThemedText>
-        </Pressable>
-      </LinearGradient>
+      <PopCard delay={500} style={[styles.ctaBanner, SHADOW]}>
+        <LinearGradient
+          colors={[ACCENTS.green.base, ACCENTS.cyan.base]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.ctaInner}>
+          <View style={{ flex: 1 }}>
+            <ThemedText style={styles.ctaTitle}>Ready when you are</ThemedText>
+            <ThemedText style={styles.ctaSub}>One clip is all it takes to start.</ThemedText>
+          </View>
+          <Pressable style={styles.ctaBtn} onPress={() => router.navigate('/upload')}>
+            <ThemedText style={styles.ctaBtnText}>Upload</ThemedText>
+          </Pressable>
+        </LinearGradient>
+      </PopCard>
     </Screen>
   );
 }
@@ -98,21 +107,24 @@ function StatCard({
   num,
   label,
   accent,
+  delay,
 }: {
   num: string;
   label: string;
   accent: { base: string; tint: string; deep: string };
+  delay: number;
 }) {
   return (
-    <View style={[styles.statCard, { backgroundColor: accent.tint }]}>
+    <PopCard interactive delay={delay} style={[styles.statCard, { backgroundColor: accent.tint }, SHADOW]}>
       <ThemedText style={[styles.statNum, { color: accent.base }]}>{num}</ThemedText>
       <ThemedText style={[styles.statLabel, { color: accent.deep }]}>{label}</ThemedText>
-    </View>
+    </PopCard>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: { borderRadius: 24, padding: Spacing.four, gap: Spacing.two },
+  hero: { borderRadius: 24, overflow: 'hidden' },
+  heroInner: { padding: Spacing.four, gap: Spacing.two },
   heroBadge: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(255,255,255,0.2)',
@@ -156,13 +168,12 @@ const styles = StyleSheet.create({
   featureTitle: { fontSize: 16, fontWeight: '800', marginTop: 2 },
   featureText: { fontSize: 13, lineHeight: 18, opacity: 0.85 },
 
-  ctaBanner: {
-    borderRadius: 20,
+  ctaBanner: { borderRadius: 20, overflow: 'hidden', marginTop: Spacing.one },
+  ctaInner: {
     padding: Spacing.three,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
-    marginTop: Spacing.one,
   },
   ctaTitle: { color: '#fff', fontWeight: '800', fontSize: 18 },
   ctaSub: { color: 'rgba(255,255,255,0.9)', fontSize: 13 },

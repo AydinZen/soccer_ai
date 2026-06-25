@@ -21,3 +21,14 @@ export const ACCENTS = {
 export const HERO_GRADIENT = ['#2563EB', '#7C3AED'] as const;
 /** Pitch gradient — used on the progress / stats surfaces. */
 export const PITCH_GRADIENT = ['#16A34A', '#0891B2'] as const;
+/** Profile cover gradient — sunset violet → pink → orange. */
+export const PROFILE_GRADIENT = ['#7C3AED', '#EC4899', '#F97316'] as const;
+
+/** Soft elevation shadow (translates to box-shadow on web). */
+export const SHADOW = {
+  shadowColor: '#0B1220',
+  shadowOpacity: 0.12,
+  shadowRadius: 16,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 4,
+} as const;
