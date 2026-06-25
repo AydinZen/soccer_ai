@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "PitchIQ",
-    "slug": "pitchiq",
+    "name": "CoachVision",
+    "slug": "coachvision",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "pitchiq",
+    "scheme": "coachvision",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
@@ -38,7 +38,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow PitchIQ to access your photos to set a profile picture."
+          "photosPermission": "Allow CoachVision to access your photos to set a profile picture."
         }
       ],
       "expo-video"

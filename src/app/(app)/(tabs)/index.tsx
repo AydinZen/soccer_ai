@@ -33,7 +33,7 @@ export default function Home() {
           end={{ x: 1, y: 1 }}
           style={styles.heroInner}>
           <View style={styles.heroBadge}>
-            <ThemedText style={styles.heroBadgeText}>⚽ PITCHIQ</ThemedText>
+            <ThemedText style={styles.heroBadgeText}>⚽ COACHVISION</ThemedText>
           </View>
           <ThemedText style={styles.heroTitle}>Level up your game</ThemedText>
           <ThemedText style={styles.heroSub}>
