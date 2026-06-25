@@ -38,7 +38,7 @@ export default function Login() {
       <View style={styles.header}>
         <ThemedText type="title">Welcome back</ThemedText>
         <ThemedText type="default" themeColor="textSecondary">
-          Log in to your Soccer AI Coach account.
+          Log in to your PitchIQ account.
         </ThemedText>
       </View>
 

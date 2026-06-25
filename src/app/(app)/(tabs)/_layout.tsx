@@ -38,7 +38,7 @@ function SidebarLayout() {
       <View style={[styles.sidebar, { borderRightColor: theme.backgroundElement }]}>
         <View style={styles.brand}>
           <ThemedText style={styles.brandEmoji}>⚽</ThemedText>
-          <ThemedText style={styles.brandText}>AI Coach</ThemedText>
+          <ThemedText style={styles.brandText}>PitchIQ</ThemedText>
         </View>
 
         <View style={styles.navList}>
