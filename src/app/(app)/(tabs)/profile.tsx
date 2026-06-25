@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Alert, Image, Platform, StyleSheet, View } from 'react-native';
 
 import { ProfileForm } from '@/components/profile-form';
 import { ThemedText } from '@/components/themed-text';
@@ -9,17 +9,56 @@ import { Button } from '@/components/ui/button';
 import { PopCard } from '@/components/ui/pop-card';
 import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
-import { ACCENTS, PROFILE_GRADIENT, SHADOW } from '@/constants/ui';
+import { ACCENTS, DANGER, PROFILE_GRADIENT, SHADOW } from '@/constants/ui';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useAnalyses } from '@/hooks/use-analyses';
 import { useTheme } from '@/hooks/use-theme';
+import { clearAllUserData } from '@/lib/reset';
 import { POSITION_LABELS, SKILL_LABELS } from '@/types/profile';
+
+const RESET_MESSAGE = 'This permanently deletes all your clips and ratings. This cannot be undone.';
+
+/** Cross-platform confirm: native gets an Alert, web gets window.confirm. */
+function confirmReset(): Promise<boolean> {
+  if (Platform.OS === 'web') {
+    return Promise.resolve(typeof window !== 'undefined' && window.confirm(RESET_MESSAGE));
+  }
+  return new Promise((resolve) => {
+    Alert.alert('Reset everything?', RESET_MESSAGE, [
+      { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+      { text: 'Delete all', style: 'destructive', onPress: () => resolve(true) },
+    ]);
+  });
+}
+
+function notify(message: string) {
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined') window.alert(message);
+  } else {
+    Alert.alert(message);
+  }
+}
 
 export default function ProfileTab() {
   const { profile, user, signOut } = useAuth();
-  const { stats } = useAnalyses();
+  const { stats, reload } = useAnalyses();
   const theme = useTheme();
   const [editing, setEditing] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  async function handleReset() {
+    if (!(await confirmReset())) return;
+    setResetting(true);
+    try {
+      await clearAllUserData();
+      await reload();
+      notify('All clips and ratings have been cleared. Fresh start! ⚽');
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'Could not reset your data. Please try again.');
+    } finally {
+      setResetting(false);
+    }
+  }
 
   if (editing) {
     return (
@@ -110,6 +149,22 @@ export default function ProfileTab() {
 
       <Button title="Edit profile" onPress={() => setEditing(true)} />
       <Button title="Sign out" variant="secondary" onPress={signOut} />
+
+      {/* Danger zone */}
+      <View style={styles.dangerZone}>
+        <ThemedText type="smallBold" style={[styles.cardLabel, { color: DANGER }]}>
+          DANGER ZONE
+        </ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          Wipe every clip and rating to start completely fresh.
+        </ThemedText>
+        <Button
+          title={resetting ? 'Resetting…' : 'Reset all data'}
+          loading={resetting}
+          style={{ backgroundColor: DANGER }}
+          onPress={handleReset}
+        />
+      </View>
     </Screen>
   );
 }
@@ -154,6 +209,7 @@ function DetailRow({ icon, label, value }: { icon: string; label: string; value:
 }
 
 const styles = StyleSheet.create({
+  dangerZone: { gap: Spacing.two, marginTop: Spacing.three },
   coverCard: { borderRadius: 24, overflow: 'hidden' },
   cover: { height: 120 },
   avatarBlock: { alignItems: 'center', paddingHorizontal: Spacing.four, paddingBottom: Spacing.four, marginTop: -48 },
