@@ -11,26 +11,34 @@ export function UploadProgress({ progress }: { progress: number }) {
 
   return (
     <View style={styles.wrap}>
-      <ThemedText type="title" style={styles.center}>
-        Uploading…
-      </ThemedText>
-      <ThemedText type="default" themeColor="textSecondary" style={styles.center}>
-        Keep the app open while your clip uploads.
-      </ThemedText>
-
-      <View style={[styles.track, { backgroundColor: theme.backgroundElement }]}>
-        <View style={[styles.fill, { width: `${pct}%`, backgroundColor: BRAND }]} />
+      <ThemedText style={styles.icon}>☁️</ThemedText>
+      <View style={styles.textBlock}>
+        <ThemedText type="subtitle" style={styles.center}>
+          Uploading your clip…
+        </ThemedText>
+        <ThemedText type="default" themeColor="textSecondary" style={styles.center}>
+          Keep the app open while your clip uploads.
+        </ThemedText>
       </View>
-      <ThemedText type="smallBold" style={styles.center}>
-        {pct}%
-      </ThemedText>
+
+      <View style={styles.progressWrap}>
+        <View style={[styles.track, { backgroundColor: theme.backgroundElement }]}>
+          <View style={[styles.fill, { width: `${pct}%` as `${number}%`, backgroundColor: BRAND }]} />
+        </View>
+        <ThemedText type="smallBold" style={{ color: BRAND }}>
+          {pct}%
+        </ThemedText>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, justifyContent: 'center', gap: Spacing.three },
+  wrap: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: Spacing.three },
+  icon: { fontSize: 56 },
+  textBlock: { gap: Spacing.one, width: '100%' },
   center: { textAlign: 'center' },
-  track: { height: 12, borderRadius: 6, overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: 6 },
+  progressWrap: { width: '100%', gap: Spacing.one },
+  track: { height: 10, borderRadius: 5, overflow: 'hidden', width: '100%' },
+  fill: { height: '100%', borderRadius: 5 },
 });
