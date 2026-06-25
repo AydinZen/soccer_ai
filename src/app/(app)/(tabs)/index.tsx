@@ -8,6 +8,7 @@ import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
 import { ACCENTS, HERO_GRADIENT, SHADOW } from '@/constants/ui';
 import { useAuth } from '@/contexts/AuthProvider';
+import { useAnalyses } from '@/hooks/use-analyses';
 import { POSITION_LABELS } from '@/types/profile';
 
 const FEATURES = [
@@ -19,6 +20,7 @@ const FEATURES = [
 
 export default function Home() {
   const { profile } = useAuth();
+  const { stats } = useAnalyses();
   const firstName = profile?.full_name?.split(' ')[0] ?? 'Player';
 
   return (
@@ -58,9 +60,14 @@ export default function Home() {
 
       {/* Stats row */}
       <View style={styles.statsRow}>
-        <StatCard num="0" label="Clips" accent={ACCENTS.blue} delay={60} />
-        <StatCard num="—" label="Avg Rating" accent={ACCENTS.orange} delay={120} />
-        <StatCard num="0" label="Drills" accent={ACCENTS.violet} delay={180} />
+        <StatCard num={String(stats.clipCount)} label="Clips" accent={ACCENTS.blue} delay={60} />
+        <StatCard
+          num={stats.avgRating != null ? stats.avgRating.toFixed(1) : '—'}
+          label="Avg Rating"
+          accent={ACCENTS.orange}
+          delay={120}
+        />
+        <StatCard num={String(stats.drillCount)} label="Drills" accent={ACCENTS.violet} delay={180} />
       </View>
 
       {/* Feature grid */}

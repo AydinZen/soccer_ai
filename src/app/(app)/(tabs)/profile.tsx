@@ -11,11 +11,13 @@ import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
 import { ACCENTS, PROFILE_GRADIENT, SHADOW } from '@/constants/ui';
 import { useAuth } from '@/contexts/AuthProvider';
+import { useAnalyses } from '@/hooks/use-analyses';
 import { useTheme } from '@/hooks/use-theme';
 import { POSITION_LABELS, SKILL_LABELS } from '@/types/profile';
 
 export default function ProfileTab() {
   const { profile, user, signOut } = useAuth();
+  const { stats } = useAnalyses();
   const theme = useTheme();
   const [editing, setEditing] = useState(false);
 
@@ -76,9 +78,14 @@ export default function ProfileTab() {
 
       {/* Career stat tiles */}
       <View style={styles.statsRow}>
-        <StatTile num="0" label="Clips" accent={ACCENTS.blue} delay={80} />
-        <StatTile num="—" label="Avg Rating" accent={ACCENTS.violet} delay={140} />
-        <StatTile num="0" label="Drills" accent={ACCENTS.pink} delay={200} />
+        <StatTile num={String(stats.clipCount)} label="Clips" accent={ACCENTS.blue} delay={80} />
+        <StatTile
+          num={stats.avgRating != null ? stats.avgRating.toFixed(1) : '—'}
+          label="Avg Rating"
+          accent={ACCENTS.violet}
+          delay={140}
+        />
+        <StatTile num={String(stats.drillCount)} label="Drills" accent={ACCENTS.pink} delay={200} />
       </View>
 
       {/* Bio */}

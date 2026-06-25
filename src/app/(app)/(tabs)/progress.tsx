@@ -5,15 +5,39 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
+import { PopCard } from '@/components/ui/pop-card';
 import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
-import { ACCENTS, PITCH_GRADIENT } from '@/constants/ui';
+import { ACCENTS, BRAND, PITCH_GRADIENT, SHADOW } from '@/constants/ui';
+import { useAuth } from '@/contexts/AuthProvider';
+import { useAnalyses } from '@/hooks/use-analyses';
 import { useTheme } from '@/hooks/use-theme';
-
-const SKILLS = ['Finishing', 'First Touch', 'Movement', 'Dribbling', 'Pressing'];
+import {
+  SKILL_KEYS_BY_POSITION,
+  SKILL_KEY_LABELS,
+  type Analysis,
+  type AnalysisResult,
+} from '@/types/analysis';
+import { POSITION_LABELS } from '@/types/profile';
 
 export default function Progress() {
   const theme = useTheme();
+  const { profile } = useAuth();
+  const { analyses, stats } = useAnalyses();
+
+  // Show real averaged skill axes once we have them; otherwise list the
+  // player's position-specific skills as empty placeholders.
+  const skillRows =
+    stats.skillAverages.length > 0
+      ? stats.skillAverages.map((s) => ({ label: s.label, value: s.value as number | null }))
+      : (SKILL_KEYS_BY_POSITION[profile?.position ?? 'forward'] ?? []).map((key) => ({
+          label: SKILL_KEY_LABELS[key] ?? key,
+          value: null as number | null,
+        }));
+
+  const recent = analyses.filter(
+    (a): a is Analysis & { result: AnalysisResult } => a.status === 'complete' && !!a.result,
+  );
 
   return (
     <Screen maxWidth={1100}>
@@ -27,18 +51,20 @@ export default function Progress() {
         <ThemedText style={styles.headerTitle}>Track every match</ThemedText>
         <View style={styles.headerStats}>
           <View style={styles.headerStat}>
-            <ThemedText style={styles.headerStatNum}>0</ThemedText>
+            <ThemedText style={styles.headerStatNum}>{stats.clipCount}</ThemedText>
             <ThemedText style={styles.headerStatLabel}>Analyses</ThemedText>
           </View>
           <View style={styles.headerDivider} />
           <View style={styles.headerStat}>
-            <ThemedText style={styles.headerStatNum}>—</ThemedText>
+            <ThemedText style={styles.headerStatNum}>
+              {stats.avgRating != null ? stats.avgRating.toFixed(1) : '—'}
+            </ThemedText>
             <ThemedText style={styles.headerStatLabel}>Overall</ThemedText>
           </View>
           <View style={styles.headerDivider} />
           <View style={styles.headerStat}>
-            <ThemedText style={styles.headerStatNum}>0</ThemedText>
-            <ThemedText style={styles.headerStatLabel}>Drills done</ThemedText>
+            <ThemedText style={styles.headerStatNum}>{stats.drillCount}</ThemedText>
+            <ThemedText style={styles.headerStatLabel}>Drills</ThemedText>
           </View>
         </View>
       </LinearGradient>
@@ -46,37 +72,73 @@ export default function Progress() {
       {/* Skill ratings */}
       <ThemedView type="backgroundElement" style={styles.card}>
         <ThemedText type="smallBold">Skill Ratings</ThemedText>
-        {SKILLS.map((skill) => (
-          <View key={skill} style={styles.barRow}>
+        {skillRows.map((skill) => (
+          <View key={skill.label} style={styles.barRow}>
             <ThemedText type="small" style={styles.barLabel}>
-              {skill}
+              {skill.label}
             </ThemedText>
             <View style={[styles.barTrack, { backgroundColor: theme.backgroundSelected }]}>
-              <View style={[styles.barFill, { width: '0%', backgroundColor: ACCENTS.blue.base }]} />
+              <View
+                style={[
+                  styles.barFill,
+                  {
+                    width: `${skill.value != null ? Math.min(100, Math.max(0, skill.value * 10)) : 0}%`,
+                    backgroundColor: ACCENTS.blue.base,
+                  },
+                ]}
+              />
             </View>
             <ThemedText type="small" themeColor="textSecondary" style={styles.barVal}>
-              —
+              {skill.value != null ? skill.value.toFixed(1) : '—'}
             </ThemedText>
           </View>
         ))}
       </ThemedView>
 
-      {/* Recent analyses empty state */}
+      {/* Recent analyses */}
       <ThemedView type="backgroundElement" style={styles.card}>
         <ThemedText type="smallBold">Recent Analyses</ThemedText>
-        <View style={styles.emptyState}>
-          <View style={[styles.emptyIconWrap, { backgroundColor: ACCENTS.violet.tint }]}>
-            <ThemedText style={styles.emptyIcon}>🎬</ThemedText>
+        {recent.length === 0 ? (
+          <View style={styles.emptyState}>
+            <View style={[styles.emptyIconWrap, { backgroundColor: ACCENTS.violet.tint }]}>
+              <ThemedText style={styles.emptyIcon}>🎬</ThemedText>
+            </View>
+            <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>
+              No analyses yet. Upload a match clip and your performance history will build up here.
+            </ThemedText>
           </View>
-          <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>
-            No analyses yet. Upload a match clip and your performance history will build up here.
-          </ThemedText>
-        </View>
+        ) : (
+          recent.map((a, i) => (
+            <PopCard
+              key={a.id}
+              delay={60 + i * 50}
+              style={[styles.recentRow, { backgroundColor: theme.background }, SHADOW]}>
+              <View style={[styles.ratingBadge, { backgroundColor: BRAND }]}>
+                <ThemedText style={styles.ratingBadgeText}>
+                  {a.result.overall_rating.toFixed(1)}
+                </ThemedText>
+              </View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <ThemedText type="smallBold">
+                  {POSITION_LABELS[a.result.player.position] ?? 'Clip'} · {formatDate(a.created_at)}
+                </ThemedText>
+                <ThemedText type="small" themeColor="textSecondary" numberOfLines={2}>
+                  {a.result.overall_summary}
+                </ThemedText>
+              </View>
+            </PopCard>
+          ))
+        )}
       </ThemedView>
 
       <Button title="Upload a clip" onPress={() => router.navigate('/upload')} />
     </Screen>
   );
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 const styles = StyleSheet.create({
@@ -91,10 +153,26 @@ const styles = StyleSheet.create({
 
   card: { borderRadius: 18, padding: Spacing.three, gap: Spacing.two },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  barLabel: { width: 88 },
+  barLabel: { width: 120 },
   barTrack: { flex: 1, height: 10, borderRadius: 5, overflow: 'hidden' },
   barFill: { height: 10, borderRadius: 5 },
-  barVal: { width: 24, textAlign: 'right' },
+  barVal: { width: 28, textAlign: 'right' },
+
+  recentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    padding: Spacing.three,
+    borderRadius: 14,
+  },
+  ratingBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ratingBadgeText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 
   emptyState: { alignItems: 'center', gap: Spacing.two, paddingVertical: Spacing.three },
   emptyIconWrap: {
