@@ -49,31 +49,19 @@ export async function uploadVideo(
   const path = `${userId}/${Date.now()}.${ext}`;
 
   if (Platform.OS === 'web') {
-    // Get a signed upload URL from our Edge Function (uses service role — no auth needed).
     onProgress(0.1);
-    const urlRes = await supabase.functions.invoke('get-upload-url', {
-      body: { user_id: userId, content_type: contentType },
-    });
-    if (urlRes.error) throw new Error(`Could not get upload URL: ${urlRes.error.message}`);
-    const { signedUrl, path: signedPath } = urlRes.data as { signedUrl: string; path: string };
-
-    // Read the video blob and PUT it to the signed URL.
     const response = await fetch(localUri);
     if (!response.ok) throw new Error(`Could not read video file (${response.status})`);
     const blob = await response.blob();
-    onProgress(0.5);
+    onProgress(0.4);
 
-    const uploadResponse = await fetch(signedUrl, {
-      method: 'PUT',
-      headers: { 'Content-Type': contentType },
-      body: blob,
-    });
-    if (!uploadResponse.ok) {
-      const body = await uploadResponse.text();
-      throw new Error(`Upload failed (${uploadResponse.status}): ${body}`);
-    }
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET)
+      .upload(path, blob, { contentType, upsert: false });
+    if (uploadError) throw new Error(`Storage upload failed: ${uploadError.message}`);
+
     onProgress(1);
-    return { path: signedPath };
+    return { path };
   }
 
   // Native: stream via expo-file-system for real progress.
