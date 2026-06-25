@@ -21,6 +21,9 @@ type Props = {
   scroll?: boolean;
   edges?: readonly Edge[];
   contentStyle?: StyleProp<ViewStyle>;
+  /** Override the centered content max width (forms keep the default; wide
+   * dashboard screens pass a larger value to fill desktop space). */
+  maxWidth?: number;
 };
 
 /**
@@ -32,6 +35,7 @@ export function Screen({
   scroll = true,
   edges = ['top', 'bottom'],
   contentStyle,
+  maxWidth = MaxContentWidth,
 }: Props) {
   return (
     <ThemedView style={styles.flex}>
@@ -42,12 +46,12 @@ export function Screen({
           {scroll ? (
             <ScrollView
               keyboardShouldPersistTaps="handled"
-              contentContainerStyle={[styles.content, contentStyle]}
+              contentContainerStyle={[styles.content, { maxWidth }, contentStyle]}
               showsVerticalScrollIndicator={false}>
               {children}
             </ScrollView>
           ) : (
-            <View style={[styles.content, styles.flex, contentStyle]}>{children}</View>
+            <View style={[styles.content, { maxWidth }, styles.flex, contentStyle]}>{children}</View>
           )}
         </KeyboardAvoidingView>
       </SafeAreaView>

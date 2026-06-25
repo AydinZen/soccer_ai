@@ -16,7 +16,7 @@ export default function Progress() {
   const theme = useTheme();
 
   return (
-    <Screen>
+    <Screen maxWidth={1100}>
       {/* Header card */}
       <LinearGradient
         colors={PITCH_GRADIENT}

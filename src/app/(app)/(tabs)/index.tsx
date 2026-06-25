@@ -21,7 +21,7 @@ export default function Home() {
   const firstName = profile?.full_name?.split(' ')[0] ?? 'Player';
 
   return (
-    <Screen>
+    <Screen maxWidth={1100}>
       {/* Hero */}
       <LinearGradient
         colors={HERO_GRADIENT}
